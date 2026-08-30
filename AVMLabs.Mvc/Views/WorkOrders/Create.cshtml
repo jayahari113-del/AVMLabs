@@ -1,0 +1,131 @@
+@model AVMLabs.Mvc.Models.WorkOrderEntryVm
+@{
+    ViewData["Title"] = "New Work Order";
+}
+
+<h2>New Work Order</h2>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert @(Model.Success ? "alert-success" : "alert-danger")">@Model.Message</div>
+}
+
+<form asp-action="Create" method="post" id="woForm">
+    <div class="mb-3 col-md-5">
+        <label class="form-label">Client</label>
+        <select name="clientId" class="form-select" required>
+            <option value="">-- Select Client --</option>
+            @foreach (var c in Model.Clients)
+            {
+                <option value="@c.ClientId" selected="@(Model.ClientId == c.ClientId)">@c.ClientName</option>
+            }
+        </select>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">Add Test</div>
+        <div class="card-body row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Test</label>
+                <select id="testSelect" class="form-select">
+                    @foreach (var t in Model.Tests)
+                    {
+                        <option value="@t.TestId" data-rate="@t.Rate.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                            @t.TestName (@t.Rate.ToString("C2"))
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Quantity</label>
+                <input id="qtyInput" type="number" min="1" value="1" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <button type="button" id="addRowBtn" class="btn btn-outline-primary w-100">+ Add Test</button>
+            </div>
+        </div>
+    </div>
+
+    <table class="table table-bordered" id="itemsTable">
+        <thead class="table-light">
+            <tr>
+                <th>Test</th>
+                <th>Quantity</th>
+                <th>Rate</th>
+                <th class="text-end">Amount</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="itemsBody">
+            <!-- rows added dynamically -->
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end fw-bold">Running Total</td>
+                <td class="text-end fw-bold" id="runningTotal">$0.00</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div id="hiddenInputs"></div>
+
+    <button type="submit" class="btn btn-primary">Submit Work Order</button>
+    <a asp-controller="Clients" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+<script>
+    let rowIndex = 0;
+    let total = 0;
+
+    document.getElementById('addRowBtn').addEventListener('click', function () {
+        const testSelect = document.getElementById('testSelect');
+        const qtyInput = document.getElementById('qtyInput');
+
+        const testId = testSelect.value;
+        const testName = testSelect.options[testSelect.selectedIndex].text;
+        const rate = parseFloat(testSelect.options[testSelect.selectedIndex].dataset.rate);
+        const qty = parseInt(qtyInput.value) || 1;
+        const amount = rate * qty;
+
+        total += amount;
+        rowIndex++;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${testName.split(' (')[0]}</td>
+            <td>${qty}</td>
+            <td>$${rate.toFixed(2)}</td>
+            <td class="text-end">$${amount.toFixed(2)}</td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row">Remove</button></td>
+        `;
+        document.getElementById('itemsBody').appendChild(row);
+
+        const hidden = document.getElementById('hiddenInputs');
+        const testIdInput = document.createElement('input');
+        testIdInput.type = 'hidden';
+        testIdInput.name = 'testIds';
+        testIdInput.value = testId;
+        testIdInput.className = 'row-input-' + rowIndex;
+
+        const qtyHidden = document.createElement('input');
+        qtyHidden.type = 'hidden';
+        qtyHidden.name = 'quantities';
+        qtyHidden.value = qty;
+        qtyHidden.className = 'row-input-' + rowIndex;
+
+        hidden.appendChild(testIdInput);
+        hidden.appendChild(qtyHidden);
+
+        row.querySelector('.remove-row').addEventListener('click', function () {
+            total -= amount;
+            document.getElementById('runningTotal').textContent = '$' + total.toFixed(2);
+            row.remove();
+            document.querySelectorAll('.row-input-' + rowIndex).forEach(el => el.remove());
+        });
+
+        document.getElementById('runningTotal').textContent = '$' + total.toFixed(2);
+    });
+</script>
+}

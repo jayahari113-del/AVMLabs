@@ -1,0 +1,61 @@
+@model AVMLabs.Mvc.Models.ClientDetailsVm
+@{
+    ViewData["Title"] = Model.ClientName;
+}
+
+<a asp-action="Index" class="btn btn-outline-secondary btn-sm mb-3">&larr; Back to Clients</a>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h2 class="card-title mb-3">@Model.ClientName</h2>
+        <dl class="row mb-0">
+            <dt class="col-sm-3">City</dt>
+            <dd class="col-sm-9">@Model.City</dd>
+
+            <dt class="col-sm-3">Country</dt>
+            <dd class="col-sm-9">@Model.Country</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Phone</dt>
+            <dd class="col-sm-9">@Model.Phone</dd>
+        </dl>
+    </div>
+</div>
+
+<h4>Work Orders</h4>
+<div class="table-responsive">
+    <table class="table table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Work Order Date</th>
+                <th>Status</th>
+                <th class="text-end">Total Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (!Model.WorkOrders.Any())
+        {
+            <tr>
+                <td colspan="3" class="text-center text-muted py-3">No work orders for this client yet.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var wo in Model.WorkOrders)
+            {
+                <tr>
+                    <td>@wo.WODate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        <span class="badge @(wo.Status == "Completed" ? "bg-success" : "bg-warning text-dark")">
+                            @wo.Status
+                        </span>
+                    </td>
+                    <td class="text-end">@wo.TotalAmount.ToString("C2")</td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</div>
